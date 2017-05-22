@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import { GoogleSignin, GoogleSigninButton } from 'react-native-google-signin';
 import { firebaseConnect, pathToJS, isLoaded } from 'react-redux-firebase';
 import { connect } from 'react-redux';
 import {
@@ -14,8 +13,6 @@ import {
 import configureStore from './store'
 const initialState = { firebase: { authError: null, auth: undefined }}
 const store = configureStore(initialState)
-
-const iosClientId = '499842460400-teaflfd8695oilltk5qkvl5688ebgq6b.apps.googleusercontent.com'; // get this from plist file
 
 const styles = StyleSheet.create({
   container: {
@@ -46,31 +43,12 @@ const styles = StyleSheet.create({
   auth: pathToJS(firebase, 'auth')
 }))
 export default class SigninSampleApp extends Component {
-  state = {
-    isLoading: false
-  }
-  componentDidMount() {
-    this._setupGoogleSignin();
-  }
-
   render() {
     const { auth } = this.props
-    // auth always null?
-    // if (!isLoaded(auth)) {
-    //   return (
-    //     <View style={styles.container}>
-    //       <Text>Loading...</Text>
-    //     </View>
-    //   )
-    // }
-    if (this.state.isLoading) {
+    if (!isLoaded(auth)) {
       return (
         <View style={styles.container}>
-          <ActivityIndicator
-            animating
-            style={[styles.centering, {height: 80}]}
-            size="large"
-          />
+          <Text>Loading...</Text>
         </View>
       )
     }
@@ -80,10 +58,9 @@ export default class SigninSampleApp extends Component {
           <Text style={{marginBottom: 20}}>
             Welcome!
           </Text>
-          <GoogleSigninButton
+          <Button
+            title="Sign In"
             style={{width: 212, height: 48, backgroundColor: 'transparent'}}
-            size={GoogleSigninButton.Size.Standard}
-            color={GoogleSigninButton.Color.Light}
             onPress={() => this._signIn()}
           />
         </View>
@@ -103,53 +80,17 @@ export default class SigninSampleApp extends Component {
       </View>
     );
   }
-  // based on google signin example
-  async _setupGoogleSignin() {
-    this.setState({ isLoading: true })
-    try {
-      await GoogleSignin.hasPlayServices({ autoResolve: true });
-      await GoogleSignin.configure({
-        iosClientId,
-        offlineAccess: false
-      });
-
-      const user = await GoogleSignin.currentUserAsync();
-      if (user) {
-        const creds = this.props.firebase.auth.GoogleAuthProvider.credential(null, user.accessToken)
-        await this.props.firebase.auth().signInWithCredential(creds)
-      }
-      this.setState({ isLoading: false })
-    }
-    catch(err) {
-      console.log("Google signin error", err.code, err.message);
-    }
-  }
 
   _signIn() {
     const { auth } = this.props.firebase
-    this.setState({ isLoading: true })
-    return GoogleSignin.signIn()
-      .then((user) => {
-        const creds = auth.GoogleAuthProvider.credential(null, user.accessToken)
-        return auth()
-          .signInWithCredential(creds)
-          .then(() => {
-            this.setState({ isLoading: false })
-          })
-          .catch((err) => {
-            console.error('error authing with firebase:', err)
-            this.setState({ isLoading: false })
-            return Promise.reject(err)
-          })
+    return auth()
+      .signInWithEmailAndPassword('tj@email.com', 'password123')
+      .then(() => {
+        console.error('Logged In')
       })
       .catch((err) => {
-        console.log('WRONG SIGNIN', err);
+        console.error('error authing with firebase:', err)
+        return Promise.reject(err)
       })
-  }
-
-  _signOut() {
-    return GoogleSignin.revokeAccess()
-      .then(() => GoogleSignin.signOut())
-      .then(() => this.props.firebase.logout())
   }
 }

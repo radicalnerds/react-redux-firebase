@@ -11,6 +11,7 @@ export default function configureStore (initialState, history) {
         userProfile: 'users',
         enableLogging: false,
         ReactNative: { AsyncStorage },
+        // onAuthStateChanged: (user) => console.log('User', user),
       }
     ),
     typeof window === 'object' && typeof window.devToolsExtension !== 'undefined' ? window.devToolsExtension() : f => f
